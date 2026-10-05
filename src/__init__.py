@@ -1,0 +1,2 @@
+"""Receivables Copilot application package."""
+

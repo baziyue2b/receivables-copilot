@@ -1,0 +1,29 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Generated and user data
+data/uploads/
+outputs/
+*.log
+
+# Local IDE files
+.idea/
+.vscode/
+workspace.xml.graphviz-*
+
+# Pre-project experiments that may contain local credentials
+/agentdemo1.py
+/firstagent.py
+/test.py
+/diaoyong.py
+
