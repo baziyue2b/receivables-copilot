@@ -57,6 +57,7 @@ def build_agent(
         model=Ollama(
             id=model_id,
             host=host,
+            client_params={"trust_env": False},
             api_key=None,
             keep_alive="10m",
             options={"temperature": 0.1},
