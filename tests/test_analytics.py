@@ -36,6 +36,15 @@ def test_analyze_receivables_calculates_financial_fields() -> None:
     assert result["账龄区间"].tolist() == ["1-30天", "61-90天", "31-60天", "未逾期"]
     assert result["风险等级"].tolist() == ["低", "高", "中", "低"]
 
+def test_outstanding_amount_is_rounded_to_two_decimals() -> None:
+    frame = sample_frame().iloc[[0]].copy()
+    frame["账单金额"] = [220129.87]
+    frame["实收金额"] = [137954.04]
+    frame["实际到账日"] = pd.to_datetime([None])
+
+    result = analyze_receivables(frame, analysis_date=date(2026, 4, 1))
+
+    assert result.iloc[0]["未收金额"] == 82175.83
 
 def test_aging_bucket_boundaries() -> None:
     frame = sample_frame().iloc[[1]].copy()

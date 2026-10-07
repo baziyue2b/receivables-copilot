@@ -41,7 +41,7 @@ def analyze_receivables(
     result = frame.copy()
     current = pd.Timestamp(analysis_date or date.today()).normalize()
 
-    result["未收金额"] = (result["账单金额"] - result["实收金额"]).clip(lower=0)
+    result["未收金额"] = ((result["账单金额"] - result["实收金额"]).clip(lower=0).round(2))
     result["未收比例"] = result["未收金额"] / result["账单金额"]
 
     end_dates = result["实际到账日"].where(result["未收金额"].eq(0), current)
