@@ -38,6 +38,10 @@ def test_analysis_tools_are_bound_to_current_frame() -> None:
 
     assert '"总未收金额": 3000.0' in tools["get_portfolio_overview"]()
     assert "乙公司" in tools["get_top_outstanding_customers"](1)
+    priority_result = tools["get_collection_priorities"](1)
+    assert "乙公司" in priority_result
+    assert '"优先等级": "紧急"' in priority_result
+
     assert "90天以上" in tools["get_aging_analysis"]()
     assert "没有找到" in tools["analyze_customer"]("不存在")
     assert "催收建议" not in tools["generate_receivables_report"]()

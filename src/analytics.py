@@ -174,7 +174,21 @@ def collection_priority_summary(frame: pd.DataFrame) -> pd.DataFrame:
     grouped["优先等级"] = grouped["优先分数"].map(priority_level)
     grouped["建议动作"] = grouped["优先等级"].map(actions)
 
-    return grouped.sort_values(
+    def priority_reason(row: pd.Series) -> str:
+        if float(row["未收金额"]) <= 0:
+            return "已全部回款"
+        return (
+            f"最大逾期 {int(row['最大逾期天数'])} 天，"
+            f"未收 ¥{float(row['未收金额']):,.2f}，"
+            f"未收比例 {float(row['未收比例']):.0%}"
+        )
+
+    grouped["主要原因"] = grouped.apply(priority_reason, axis=1)
+
+    result = grouped.sort_values(
         ["优先分数", "未收金额", "最大逾期天数"],
         ascending=False,
     ).reset_index(drop=True)
+
+    result.insert(0, "排名", range(1, len(result) + 1))
+    return result

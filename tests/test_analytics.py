@@ -104,3 +104,18 @@ def test_collection_priority_summary_scores_and_ranks_customers() -> None:
 
     paid = indexed.loc[["甲公司", "丁公司"]]
     assert paid["优先分数"].eq(0).all()
+
+    assert priorities["排名"].tolist() == [1, 2, 3, 4]
+    assert "最大逾期 90 天" in indexed.loc["乙公司", "主要原因"]
+    assert "未收 ¥1,600.00" in indexed.loc["乙公司", "主要原因"]
+    assert indexed.loc["甲公司", "主要原因"] == "已全部回款"
+
+def test_collection_priority_summary_handles_all_paid_customers() -> None:
+    frame = sample_frame().iloc[[0, 3]].copy()
+    analyzed = analyze_receivables(frame, analysis_date=date(2026, 4, 1))
+
+    priorities = collection_priority_summary(analyzed)
+
+    assert priorities["优先分数"].eq(0).all()
+    assert priorities["优先等级"].eq("低").all()
+    assert priorities["主要原因"].eq("已全部回款").all()

@@ -7,7 +7,12 @@ from collections.abc import Callable
 
 import pandas as pd
 
-from src.analytics import aging_summary, customer_risk_summary, summary_metrics
+from src.analytics import (
+    aging_summary,
+    collection_priority_summary,
+    customer_risk_summary,
+    summary_metrics,
+)
 from src.report import generate_markdown_report
 
 
@@ -26,6 +31,12 @@ def build_analysis_tools(frame: pd.DataFrame) -> list[Callable[..., str]]:
         """按未收金额从高到低返回客户，limit 必须在 1 到 20 之间。"""
         safe_limit = max(1, min(int(limit), 20))
         return _records_json(customer_risk_summary(frame).head(safe_limit))
+
+    def get_collection_priorities(limit: int = 10) -> str:
+        """按催收优先分数返回客户，limit 必须在 1 到 20 之间。"""
+        safe_limit = max(1, min(int(limit), 20))
+        priorities = collection_priority_summary(frame).head(safe_limit)
+        return _records_json(priorities)
 
     def get_aging_analysis() -> str:
         """按未逾期、1-30天、31-60天、61-90天、90天以上返回账龄统计。"""
@@ -52,6 +63,7 @@ def build_analysis_tools(frame: pd.DataFrame) -> list[Callable[..., str]]:
     return [
         get_portfolio_overview,
         get_top_outstanding_customers,
+        get_collection_priorities,
         get_aging_analysis,
         analyze_customer,
         generate_receivables_report,

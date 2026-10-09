@@ -8,5 +8,6 @@ def test_streamlit_app_renders_without_uncaught_errors() -> None:
     app = AppTest.from_file(script).run(timeout=30)
 
     assert not app.exception
-    assert any("应收账款" in heading.value for heading in app.get("markdown"))
+    assert any("应收账款" in item.value for item in app.get("markdown"))
+    assert any("催收优先级" in item.value for item in app.get("markdown"))
     assert len(app.metric) == 5

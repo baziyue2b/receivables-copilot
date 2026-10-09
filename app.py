@@ -26,6 +26,7 @@ from src.analytics import (
     analyze_receivables,
     customer_risk_summary,
     summary_metrics,
+    collection_priority_summary,
 )
 from src.data_service import DataValidationError, load_receivables
 from src.report import generate_html_report, generate_markdown_report
@@ -150,6 +151,8 @@ except DataValidationError as exc:
 metrics = summary_metrics(analyzed)
 customer_summary = customer_risk_summary(analyzed)
 aging = aging_summary(analyzed).reset_index()
+collection_priorities = collection_priority_summary(analyzed)
+
 
 st.markdown(
     f"""
@@ -215,6 +218,35 @@ with chart_right:
         legend_title=None,
     )
     st.plotly_chart(customer_chart, width="stretch")
+
+st.markdown("## 催收优先级")
+st.caption("综合逾期天数、未收金额、未收比例和逾期账单率生成确定性评分。")
+
+priority_columns = [
+    "排名",
+    "客户名称",
+    "优先分数",
+    "优先等级",
+    "未收金额",
+    "最大逾期天数",
+    "主要原因",
+    "建议动作",
+]
+
+st.dataframe(
+    collection_priorities.head(10)[priority_columns],
+    width="stretch",
+    hide_index=True,
+    column_config={
+        "优先分数": st.column_config.ProgressColumn(
+            "优先分数",
+            min_value=0,
+            max_value=100,
+            format="%.1f",
+        ),
+        "未收金额": st.column_config.NumberColumn(format="¥ %.2f"),
+    },
+)
 
 st.markdown("## 账单明细")
 filter_columns = st.columns(3)

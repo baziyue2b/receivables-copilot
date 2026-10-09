@@ -30,6 +30,7 @@ def test_build_agent_registers_safe_analysis_tools(monkeypatch) -> None:
     assert tool_names == {
         "get_portfolio_overview",
         "get_top_outstanding_customers",
+        "get_collection_priorities",
         "get_aging_analysis",
         "analyze_customer",
         "generate_receivables_report",
