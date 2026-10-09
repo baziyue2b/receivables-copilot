@@ -2,11 +2,13 @@ from datetime import date
 
 import pandas as pd
 
+
 from src.analytics import (
     aging_summary,
     analyze_receivables,
     customer_risk_summary,
     summary_metrics,
+    collection_priority_summary,
 )
 
 
@@ -84,3 +86,21 @@ def test_summary_metrics_and_groupings() -> None:
     customers = customer_risk_summary(analyzed)
     assert customers.iloc[0]["客户名称"] == "乙公司"
     assert customers.iloc[0]["风险等级"] == "高"
+
+
+def test_collection_priority_summary_scores_and_ranks_customers() -> None:
+    analyzed = analyze_receivables(
+        sample_frame(),
+        analysis_date=date(2026, 4, 1),
+    )
+
+    priorities = collection_priority_summary(analyzed)
+    indexed = priorities.set_index("客户名称")
+
+    assert priorities["客户名称"].iloc[:2].tolist() == ["乙公司", "丙公司"]
+    assert indexed.loc["乙公司", "优先分数"] == 76.0
+    assert indexed.loc["乙公司", "优先等级"] == "紧急"
+    assert indexed.loc["乙公司", "建议动作"] == "当天电话催收，并升级负责人。"
+
+    paid = indexed.loc[["甲公司", "丁公司"]]
+    assert paid["优先分数"].eq(0).all()

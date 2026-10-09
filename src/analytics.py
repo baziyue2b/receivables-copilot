@@ -107,3 +107,74 @@ def customer_risk_summary(frame: pd.DataFrame) -> pd.DataFrame:
     grouped["风险等级"] = grouped.pop("风险分值").map(reverse_risk)
     return grouped
 
+def collection_priority_summary(frame: pd.DataFrame) -> pd.DataFrame:
+    """Calculate deterministic customer-level collection priorities."""
+    working = frame.copy()
+    working["当前逾期未结清"] = (
+        working["未收金额"].gt(0)
+        & working["历史逾期天数"].gt(0)
+    )
+
+    grouped = (
+        working.groupby("客户名称", as_index=False)
+        .agg(
+            账单数量=("账单编号", "count"),
+            账单金额=("账单金额", "sum"),
+            未收金额=("未收金额", "sum"),
+            最大逾期天数=("历史逾期天数", "max"),
+            逾期账单数=("当前逾期未结清", "sum"),
+        )
+    )
+
+    grouped["未收比例"] = (
+        grouped["未收金额"] / grouped["账单金额"]
+    ).fillna(0).clip(0, 1)
+
+    grouped["逾期账单率"] = (
+        grouped["逾期账单数"] / grouped["账单数量"]
+    ).fillna(0).clip(0, 1)
+
+    max_outstanding = float(grouped["未收金额"].max())
+    if max_outstanding > 0:
+        amount_score = grouped["未收金额"] / max_outstanding * 30
+    else:
+        amount_score = pd.Series(0.0, index=grouped.index)
+
+    overdue_score = (
+        grouped["最大逾期天数"].clip(lower=0, upper=180)
+        / 180
+        * 40
+    )
+
+    grouped["优先分数"] = (
+        overdue_score
+        + amount_score
+        + grouped["未收比例"] * 20
+        + grouped["逾期账单率"] * 10
+    ).round(1)
+
+    grouped.loc[grouped["未收金额"].le(0), "优先分数"] = 0.0
+
+    def priority_level(score: float) -> str:
+        if score >= 70:
+            return "紧急"
+        if score >= 45:
+            return "高"
+        if score >= 20:
+            return "中"
+        return "低"
+
+    actions = {
+        "紧急": "当天电话催收，并升级负责人。",
+        "高": "2 个工作日内联系，确认付款计划。",
+        "中": "发送提醒，每周跟进。",
+        "低": "常规监控。",
+    }
+
+    grouped["优先等级"] = grouped["优先分数"].map(priority_level)
+    grouped["建议动作"] = grouped["优先等级"].map(actions)
+
+    return grouped.sort_values(
+        ["优先分数", "未收金额", "最大逾期天数"],
+        ascending=False,
+    ).reset_index(drop=True)
